@@ -1,52 +1,79 @@
-"use client";
-import { useState } from "react";
+'use client';
 
-export default function ComplaintForm() {
-  const [complaint, setComplaint] = useState({
+import { useState, useEffect } from 'react';
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+
+export default function ComplaintPage() {
+  const [form, setForm] = useState({
     name: "",
     room: "",
     issue: "",
-    details: "",
+    details: ""
   });
-
   const [complaints, setComplaints] = useState([]);
 
   const handleChange = (e) => {
-    setComplaint({ ...complaint, [e.target.name]: e.target.value });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setComplaints([...complaints, complaint]);
-    setComplaint({ name: "", room: "", issue: "", details: "" });
+    const res = await fetch('/api/complaints', {
+      method: 'POST',
+      body: JSON.stringify(form),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      setForm({ name: "", room: "", issue: "", details: "" });
+      fetchComplaints();
+    }
   };
+
+  const fetchComplaints = async () => {
+    const res = await fetch('/api/complaints');
+    const data = await res.json();
+    setComplaints(data);
+  };
+
+  useEffect(() => {
+    fetchComplaints();
+  }, []);
 
   return (
-    <div className="px-6 py-4">
-      <h2 className="text-xl font-semibold mb-4">Add Complaint</h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <input type="text" name="name" placeholder="Your Name" value={complaint.name} onChange={handleChange} required className="p-2 border rounded" />
-        <input type="text" name="room" placeholder="Room Number" value={complaint.room} onChange={handleChange} required className="p-2 border rounded" />
-        <input type="text" name="issue" placeholder="Issue Title" value={complaint.issue} onChange={handleChange} required className="p-2 border rounded" />
-        <input type="text" name="details" placeholder="Issue Details" value={complaint.details} onChange={handleChange} required className="p-2 border rounded md:col-span-2" />
-        <button type="submit" className="bg-red-600 text-white py-2 px-4 rounded col-span-1 md:col-span-2">Submit Complaint</button>
-      </form>
-
-      <h3 className="text-lg font-medium mb-2">Complaints List</h3>
-      {complaints.length === 0 ? (
-        <p className="text-gray-600">No complaints submitted yet.</p>
-      ) : (
-        <div className="space-y-4">
-          {complaints.map((c, index) => (
-            <div key={index} className="p-4 border rounded shadow-sm bg-white">
-              <p><strong>Name:</strong> {c.name}</p>
-              <p><strong>Room:</strong> {c.room}</p>
-              <p><strong>Issue:</strong> {c.issue}</p>
-              <p><strong>Details:</strong> {c.details}</p>
-            </div>
+    <div>
+      <Navbar />
+      <div className="p-6 max-w-xl mx-auto">
+        <h2 className="text-xl font-bold mb-4">Submit Complaint</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {["name", "room", "issue", "details"].map((field) => (
+            <input
+              key={field}
+              name={field}
+              type="text"
+              placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+              value={form[field]}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
           ))}
-        </div>
-      )}
+          <button type="submit" className="bg-red-600 text-white px-4 py-2 rounded">
+            Submit
+          </button>
+        </form>
+
+        <h3 className="text-lg font-semibold mt-8">Complaints:</h3>
+        <ul className="mt-2 space-y-2">
+          {complaints.map((c) => (
+            <li key={c.id} className="border p-2 rounded shadow">
+              <strong>{c.name}</strong> ({c.room})<br />
+              <em>{c.issue}</em>: {c.details}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <Footer />
     </div>
   );
 }

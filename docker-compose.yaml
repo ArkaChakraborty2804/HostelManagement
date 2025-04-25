@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: Arka@281004
+      DB_NAME: hostel_easy
+    networks:
+      - hostel_net
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Arka@281004
+      MYSQL_DATABASE: hostel_easy
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - hostel_net
+
+volumes:
+  mysql_data:
+
+networks:
+  hostel_net:

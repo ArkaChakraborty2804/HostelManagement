@@ -1,55 +1,79 @@
-"use client";
-import { useState } from "react";
+'use client';
 
-export default function StudentForm() {
-  const [student, setStudent] = useState({
+import { useState, useEffect } from 'react';
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+
+export default function StudentPage() {
+  const [form, setForm] = useState({
     name: "",
     dob: "",
     phone: "",
     department: "",
-    roll: "",
+    roll: ""
   });
-
   const [students, setStudents] = useState([]);
 
   const handleChange = (e) => {
-    setStudent({ ...student, [e.target.name]: e.target.value });
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setStudents([...students, student]);
-    setStudent({ name: "", dob: "", phone: "", department: "", roll: "" });
+    const res = await fetch('/api/students', {
+      method: 'POST',
+      body: JSON.stringify(form),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      setForm({ name: "", dob: "", phone: "", department: "", roll: "" });
+      fetchStudents();
+    }
   };
+
+  const fetchStudents = async () => {
+    const res = await fetch('/api/students');
+    const data = await res.json();
+    setStudents(data);
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
   return (
-    <div className="px-6 py-4">
-      <h2 className="text-xl font-semibold mb-4">Add Student</h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <input type="text" name="name" placeholder="Name" value={student.name} onChange={handleChange} required className="p-2 border rounded" />
-        <input type="date" name="dob" placeholder="DOB" value={student.dob} onChange={handleChange} required className="p-2 border rounded" />
-        <input type="tel" name="phone" placeholder="Phone" value={student.phone} onChange={handleChange} required className="p-2 border rounded" />
-        <input type="text" name="department" placeholder="Department" value={student.department} onChange={handleChange} required className="p-2 border rounded" />
-        <input type="text" name="roll" placeholder="Roll Number" value={student.roll} onChange={handleChange} required className="p-2 border rounded" />
-        <button type="submit" className="bg-blue-600 text-white py-2 px-4 rounded col-span-1 md:col-span-2">Add Student</button>
-      </form>
-
-      <h3 className="text-lg font-medium mb-2">Student List</h3>
-      {students.length === 0 ? (
-        <p className="text-gray-600">No students added yet.</p>
-      ) : (
-        <div className="space-y-4">
-          {students.map((s, index) => (
-            <div key={index} className="p-4 border rounded shadow-sm bg-white">
-              <p><strong>Name:</strong> {s.name}</p>
-              <p><strong>DOB:</strong> {s.dob}</p>
-              <p><strong>Phone:</strong> {s.phone}</p>
-              <p><strong>Department:</strong> {s.department}</p>
-              <p><strong>Roll Number:</strong> {s.roll}</p>
-            </div>
+    <div>
+      <Navbar />
+      <div className="p-6 max-w-xl mx-auto">
+        <h2 className="text-xl font-bold mb-4">Add Student</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {["name", "dob", "phone", "department", "roll"].map((field) => (
+            <input
+              key={field}
+              name={field}
+              type={field === "dob" ? "date" : "text"}
+              placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+              value={form[field]}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border rounded"
+            />
           ))}
-        </div>
-      )}
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+            Submit
+          </button>
+        </form>
+
+        <h3 className="text-lg font-semibold mt-8">Student List:</h3>
+        <ul className="mt-2 space-y-2">
+          {students.map((s) => (
+            <li key={s.id} className="border p-2 rounded shadow">
+              {s.name} | {s.department} | {s.roll}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <Footer />
     </div>
   );
 }
